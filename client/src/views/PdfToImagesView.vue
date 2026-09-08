@@ -5,12 +5,13 @@ import FileDropZone from '../components/FileDropZone.vue'
 import OutputGrid from '../components/OutputGrid.vue'
 import ToolPage from '../components/ToolPage.vue'
 import { BROWSER_PDF_WARNING_BYTES } from '../constants'
-import type { ImageFormat, OutputFile } from '../types'
+import type { ImageFormat, OutputFile, PdfImageLayout } from '../types'
 import { downloadZip, friendlyError, revokeOutputs, validateFiles } from '../utils/files'
 import { renderPdfToImages } from '../utils/pdf'
 
 const file = ref<File>()
 const format = ref<ImageFormat>('jpeg')
+const layout = ref<PdfImageLayout>('pages')
 const processing = ref(false)
 const progress = ref(0)
 const outputs = ref<OutputFile[]>([])
@@ -33,10 +34,10 @@ async function processPdf() {
   progress.value = 1
   revokeOutputs(outputs.value)
   outputs.value = []
-  const options = { format: format.value, quality: 1, scale: 2, onProgress: (value: number) => { progress.value = value } }
+  const options = { format: format.value, quality: 1, scale: 2, layout: layout.value, onProgress: (value: number) => { progress.value = value } }
   try {
     outputs.value = await renderPdfToImages(file.value, options)
-    ElMessage.success(`已转换 ${outputs.value.length} 页`)
+    ElMessage.success(layout.value === 'long' ? 'PDF 长图已生成' : `已转换 ${outputs.value.length} 页`)
   } catch (error) {
     ElMessage.error(friendlyError(error))
   } finally {
@@ -69,15 +70,16 @@ onBeforeUnmount(() => revokeOutputs(outputs.value))
       </template>
     </FileDropZone>
 
-    <el-alert v-if="isLarge" title="此 PDF 较大，将继续在本地处理；如浏览器内存不足，请降低清晰度或拆分 PDF 后重试。" type="warning" :closable="false" show-icon />
+    <el-alert v-if="isLarge" title="此 PDF 较大，将继续在本地处理；如浏览器内存不足，请拆分 PDF 后重试。" type="warning" :closable="false" show-icon />
 
-    <div class="controls-grid one">
+    <div class="controls-grid two">
+      <label>图片布局<el-segmented v-model="layout" :options="[{ label: '一页一图', value: 'pages' }, { label: '合成长图', value: 'long' }]" /></label>
       <label>输出格式<el-select v-model="format"><el-option label="JPG" value="jpeg" /><el-option label="PNG" value="png" /><el-option label="WebP" value="webp" /></el-select></label>
     </div>
     <div v-if="processing || progress" class="progress-wrap"><el-progress :percentage="progress" :status="progress === 100 ? 'success' : undefined" /></div>
     <div class="action-bar">
       <el-button type="primary" size="large" :loading="processing" :disabled="!file" @click="processPdf">开始转换</el-button>
-      <el-button v-if="outputs.length > 1" size="large" @click="zipAll">打包 ZIP</el-button>
+      <el-button v-if="layout === 'pages' && outputs.length > 1" size="large" @click="zipAll">打包 ZIP</el-button>
       <span>文件仅用于本次处理，不读取，不存储，不对外泄露</span>
     </div>
     <OutputGrid :items="outputs" />

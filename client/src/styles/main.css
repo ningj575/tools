@@ -108,6 +108,10 @@ h1 { margin: 0; color: #142033; font-size: clamp(2rem, 3.6vw, 3rem); letter-spac
 .output-item span { font-size: .72rem; color: var(--muted); }
 .single-result { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .single-result-image { width: 100%; height: min(58vw, 520px); border: 1px solid var(--line); border-radius: 8px; }
+.wechat-save-dialog { width: min(92vw, 520px); }
+.wechat-save-guide { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.wechat-save-guide img { display: block; max-width: 100%; max-height: 62vh; border-radius: 8px; object-fit: contain; -webkit-touch-callout: default; user-select: auto; }
+.wechat-save-guide p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.6; }
 .site-footer { text-align: center; color: #8490a0; border-top: 1px solid var(--line); padding: 20px; font-size: .75rem; }
 
 @media (max-width: 900px) {
