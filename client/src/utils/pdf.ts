@@ -6,6 +6,42 @@ import { canvasToBlob, loadImage } from './canvas'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).href
 
+const LONG_IMAGE_MAX_PIXELS = 16_000_000
+const LONG_IMAGE_MAX_HEIGHT = 30_000
+
+/** 将逐页渲染结果按相同宽度纵向合成长图，并限制手机浏览器的画布内存。 */
+async function mergePdfPagesToLongImage(file: File, pages: OutputFile[], options: PdfRenderOptions): Promise<OutputFile> {
+  if (!pages.length) throw new Error('PDF 没有可合并的页面')
+  const sourceWidth = Math.max(...pages.map((page) => page.width ?? 1))
+  const sourceHeight = pages.reduce((sum, page) => sum + (page.height ?? 1) * sourceWidth / (page.width ?? 1), 0)
+  const safeScale = Math.min(1, LONG_IMAGE_MAX_HEIGHT / sourceHeight, Math.sqrt(LONG_IMAGE_MAX_PIXELS / (sourceWidth * sourceHeight)))
+  const width = Math.max(1, Math.floor(sourceWidth * safeScale))
+  const heights = pages.map((page) => Math.max(1, Math.round((page.height ?? 1) * width / (page.width ?? 1))))
+  const height = heights.reduce((sum, item) => sum + item, 0)
+  if (width < 320 || height > LONG_IMAGE_MAX_HEIGHT) throw new Error('PDF 页数过多，合成长图后清晰度过低，请选择一页一图')
+
+  const canvas = window.document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d', { alpha: options.format !== 'jpeg' })
+  if (!context) throw new Error('无法创建 PDF 长图画布')
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, width, height)
+  let y = 0
+  for (let index = 0; index < pages.length; index += 1) {
+    const image = await loadImage(pages[index].blob)
+    context.drawImage(image, 0, y, width, heights[index])
+    y += heights[index]
+    options.onProgress?.(90 + Math.round(((index + 1) / pages.length) * 10))
+  }
+  const blob = await canvasToBlob(canvas, options.format, options.quality)
+  canvas.width = 1
+  canvas.height = 1
+  const extension = options.format === 'jpeg' ? 'jpg' : options.format
+  const baseName = file.name.replace(/\.pdf$/i, '') || 'pdf'
+  return { name: `${baseName}-long.${extension}`, blob, url: URL.createObjectURL(blob), width, height }
+}
+
 /** 逐页渲染 PDF，限制并发以降低长文档的峰值内存。 */
 export async function renderPdfToImages(file: File, options: PdfRenderOptions): Promise<OutputFile[]> {
   const bytes = new Uint8Array(await file.arrayBuffer())
@@ -33,7 +69,13 @@ export async function renderPdfToImages(file: File, options: PdfRenderOptions): 
       canvas.width = 1
       canvas.height = 1
       page.cleanup()
-      options.onProgress?.(Math.round((pageNumber / document.numPages) * 100))
+      const renderShare = options.layout === 'long' ? 90 : 100
+      options.onProgress?.(Math.round((pageNumber / document.numPages) * renderShare))
+    }
+    if (options.layout === 'long') {
+      const longImage = await mergePdfPagesToLongImage(file, outputs, options)
+      outputs.forEach((item) => URL.revokeObjectURL(item.url))
+      return [longImage]
     }
     return outputs
   } catch (error) {

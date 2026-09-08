@@ -1,5 +1,6 @@
 export type ImageFormat = 'png' | 'jpeg' | 'webp'
 export type StitchMode = 'horizontal' | 'vertical' | 'grid'
+export type PdfImageLayout = 'pages' | 'long'
 
 export interface OutputFile {
   name: string
@@ -13,6 +14,7 @@ export interface PdfRenderOptions {
   format: ImageFormat
   quality: number
   scale: number
+  layout?: PdfImageLayout
   onProgress?: (percent: number) => void
 }
 
