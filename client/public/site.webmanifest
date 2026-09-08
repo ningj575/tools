@@ -1,0 +1,11 @@
+{
+  "name": "星路工具箱",
+  "short_name": "星路工具",
+  "description": "免费在线 PDF 与图片处理工具",
+  "icons": [{ "src": "/favicon.svg?v=3", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }],
+  "start_url": "/pdf-to-images",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#176b87",
+  "lang": "zh-CN"
+}
