@@ -38,7 +38,7 @@ button, input, select { font: inherit; }
 h1 { margin: 0; color: #142033; font-size: clamp(2rem, 3.6vw, 3rem); letter-spacing: -.04em; line-height: 1.08; }
 .tool-heading p { margin: 12px 0 0; color: var(--muted); font-size: 1rem; line-height: 1.7; }
 .local-note { min-width: 360px; max-width: 410px; display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff8e8; border: 1px solid #f1dfae; border-radius: 12px; }
-.local-note > span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: white; background: #a94018; font-weight: 800; }
+.local-note > span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--accent); font-weight: 800; }
 .local-note strong { flex: 1; font-size: .86rem; line-height: 1.55; color: #735a1d; }
 .workspace-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 26px; }
 .drop-zone { min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed #aebdca; border-radius: 14px; background: linear-gradient(180deg, #fbfdff, #f7fafc); cursor: pointer; transition: .2s ease; outline: none; }
