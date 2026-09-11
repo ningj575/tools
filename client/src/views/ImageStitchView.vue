@@ -28,6 +28,16 @@ function addFiles(selected: File[]) {
   files.value = merged
 }
 
+/** 调整待拼接图片的排列顺序，并清除顺序已失效的旧结果。 */
+function reorderFiles(fromIndex: number, toIndex: number): void {
+  const reordered = [...files.value]
+  const [moved] = reordered.splice(fromIndex, 1)
+  reordered.splice(toIndex, 0, moved)
+  files.value = reordered
+  if (result.value) URL.revokeObjectURL(result.value.url)
+  result.value = undefined
+}
+
 /** 计算画布布局并导出拼接结果。 */
 async function run() {
   if (files.value.length < 2) return ElMessage.warning('请至少添加两张图片')
@@ -50,8 +60,8 @@ onBeforeUnmount(() => { if (result.value) URL.revokeObjectURL(result.value.url) 
 
 <template>
   <ToolPage title="图片拼接" description="免费横向、纵向或网格拼接图片，间隙、页边距和背景色均可调整。" badge="CANVAS STITCH">
-    <FileDropZone accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple title="拖拽要拼接的图片" hint="按选择顺序排列" :has-files="files.length > 0" @files="addFiles">
-      <template #files><ImagePreviewGrid embedded :files="files" @remove="files.splice($event, 1)" /></template>
+    <FileDropZone accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple title="拖拽要拼接的图片" hint="上传后可拖动或点击箭头调整顺序" :disabled="processing" :has-files="files.length > 0" @files="addFiles">
+      <template #files><ImagePreviewGrid embedded reorderable :files="files" @remove="files.splice($event, 1)" @reorder="reorderFiles" /></template>
     </FileDropZone>
     <div class="controls-grid">
       <label>布局方式<el-select v-model="mode"><el-option label="纵向拼接" value="vertical" /><el-option label="横向拼接" value="horizontal" /><el-option label="网格拼接" value="grid" /></el-select></label>

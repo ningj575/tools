@@ -22,6 +22,14 @@ function addFiles(selected: File[]) {
   files.value = merged
 }
 
+/** 调整图片顺序，新的顺序会作为生成 PDF 时的页面顺序。 */
+function reorderFiles(fromIndex: number, toIndex: number): void {
+  const reordered = [...files.value]
+  const [moved] = reordered.splice(fromIndex, 1)
+  reordered.splice(toIndex, 0, moved)
+  files.value = reordered
+}
+
 /** 在浏览器内生成 PDF 并直接下载。 */
 async function createPdf() {
   if (!files.value.length) return ElMessage.warning('请先添加图片')
@@ -42,7 +50,7 @@ async function createPdf() {
 <template>
   <ToolPage title="图片转 PDF" description="免费按顺序合并多张图片，自定义页面尺寸、方向和安全边距。" badge="IMAGE → PDF">
     <FileDropZone accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple title="拖拽多张图片到这里" hint="PNG、JPG、WebP；最多 100 张" :disabled="processing" :has-files="files.length > 0" @files="addFiles">
-      <template #files><ImagePreviewGrid embedded :files="files" @remove="files.splice($event, 1)" /></template>
+      <template #files><ImagePreviewGrid embedded reorderable :files="files" @remove="files.splice($event, 1)" @reorder="reorderFiles" /></template>
     </FileDropZone>
     <div class="controls-grid three">
       <label>页面尺寸<el-select v-model="options.size"><el-option label="A4" value="a4" /><el-option label="Letter" value="letter" /><el-option label="适配原图" value="fit" /></el-select></label>
